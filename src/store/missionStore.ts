@@ -1,0 +1,95 @@
+import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Booking, BookingStatus } from '../types';
+import * as api from '../services/apiService';
+
+interface MissionStore {
+  bookings: Booking[];
+  isLoading: boolean;
+  isOffline: boolean;
+  lastSync: string | null;
+  setOffline: (offline: boolean) => void;
+  fetchBookings: (technicianId?: string) => Promise<void>;
+  startBooking: (bookingId: string) => Promise<void>;
+  completeBooking: (bookingId: string) => Promise<void>;
+  getBookingById: (id: string) => Booking | undefined;
+}
+
+const STORAGE_KEY = 'washpro_bookings';
+
+export const useMissionStore = create<MissionStore>((set, get) => ({
+  bookings: [],
+  isLoading: true,
+  isOffline: false,
+  lastSync: null,
+
+  setOffline: (offline: boolean) => set({ isOffline: offline }),
+
+  fetchBookings: async (technicianId?: string) => {
+    set({ isLoading: true });
+    try {
+      const allBookings = await api.fetchBookings();
+      const filtered = technicianId
+        ? allBookings.filter((b) => b.technicianId === technicianId)
+        : allBookings;
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+      set({
+        bookings: filtered,
+        isLoading: false,
+        lastSync: new Date().toISOString(),
+        isOffline: false,
+      });
+    } catch (error) {
+      console.error('Failed to fetch bookings from API:', error);
+      // Offline fallback: load from cache
+      try {
+        const stored = await AsyncStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          set({ bookings: JSON.parse(stored), isLoading: false, isOffline: true });
+        } else {
+          set({ bookings: [], isLoading: false, isOffline: true });
+        }
+      } catch {
+        set({ bookings: [], isLoading: false, isOffline: true });
+      }
+    }
+  },
+
+  startBooking: async (bookingId: string) => {
+    try {
+      await api.updateBookingStatus(bookingId, 'IN_PROGRESS');
+      const { bookings } = get();
+      const updated = bookings.map((b) =>
+        b.id === bookingId
+          ? { ...b, status: 'IN_PROGRESS' as BookingStatus, startedAt: new Date().toISOString() }
+          : b
+      );
+      set({ bookings: updated });
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    } catch (error) {
+      console.error('Failed to start booking:', error);
+      throw error;
+    }
+  },
+
+  completeBooking: async (bookingId: string) => {
+    try {
+      await api.updateBookingStatus(bookingId, 'COMPLETED');
+      const { bookings } = get();
+      const updated = bookings.map((b) =>
+        b.id === bookingId
+          ? { ...b, status: 'COMPLETED' as BookingStatus, completedAt: new Date().toISOString() }
+          : b
+      );
+      set({ bookings: updated });
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    } catch (error) {
+      console.error('Failed to complete booking:', error);
+      throw error;
+    }
+  },
+
+  getBookingById: (id: string) => {
+    return get().bookings.find((b) => b.id === id);
+  },
+}));

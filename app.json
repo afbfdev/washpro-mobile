@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "washpro-mobile",
+    "name": "WashPro Tech",
     "slug": "washpro-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,21 +10,64 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1B263B"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.washpro.tech",
+      "infoPlist": {
+        "NSCameraUsageDescription": "WashPro a besoin d'accéder à la caméra pour prendre des photos des véhicules.",
+        "NSPhotoLibraryUsageDescription": "WashPro a besoin d'accéder à vos photos pour ajouter des images de véhicules.",
+        "NSLocationWhenInUseUsageDescription": "WashPro a besoin de votre position pour calculer la distance vers les missions.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "WashPro a besoin de votre position pour le suivi des missions."
+      },
+      "config": {
+        "googleMapsApiKey": "YOUR_GOOGLE_MAPS_API_KEY"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#1B263B"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "package": "com.washpro.tech",
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "WashPro a besoin de votre position pour le suivi des missions."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "WashPro a besoin d'accéder à vos photos.",
+          "cameraPermission": "WashPro a besoin d'accéder à la caméra."
+        }
+      ],
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id"
+      }
     }
   }
 }
