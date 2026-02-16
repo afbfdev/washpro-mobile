@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../store/authStore';
@@ -41,11 +42,13 @@ const LoginScreen: React.FC = () => {
         <View style={styles.content}>
           {/* Logo */}
           <View style={styles.logoContainer}>
-            <View style={styles.logoCircle}>
-              <Ionicons name="water" size={48} color={Colors.secondary} />
-            </View>
+            <Image
+              source={require('../../assets/logozo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
             <Text style={styles.appName}>ZeroEau</Text>
-            <Text style={styles.appTagline}>WashPro Technicien</Text>
+            <Text style={styles.appTagline}>Gérer Facilement les réservations</Text>
           </View>
 
           {/* Form */}
@@ -119,6 +122,12 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: 'center',
     marginBottom: 48,
+  },
+  logo: {
+    width: 180,
+    height: 150,
+    marginBottom: 3
+    ,
   },
   logoCircle: {
     width: 96,

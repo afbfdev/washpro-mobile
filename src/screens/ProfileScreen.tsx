@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../store/authStore';
 import { useMissionStore } from '../store/missionStore';
 import { Colors, Fonts, BorderRadius, Shadows } from '../constants/theme';
+import { ZONES } from '../constants/appConstants';
 
 const ProfileScreen: React.FC = () => {
   const { technician, logout } = useAuthStore();
@@ -52,7 +53,9 @@ const ProfileScreen: React.FC = () => {
           {technician?.zone && (
             <View style={styles.zoneBadge}>
               <Ionicons name="location" size={14} color={Colors.secondary} />
-              <Text style={styles.zoneText}>{technician.zone}</Text>
+              <Text style={styles.zoneText}>
+                {ZONES[technician.zone]?.name || technician.zone}
+              </Text>
             </View>
           )}
         </View>
@@ -110,7 +113,9 @@ const ProfileScreen: React.FC = () => {
               <View style={styles.menuItem}>
                 <View style={styles.menuItemLeft}>
                   <Ionicons name="map-outline" size={22} color={Colors.textSecondary} />
-                  <Text style={styles.menuItemText}>Zone: {technician.zone}</Text>
+                  <Text style={styles.menuItemText}>
+                    {ZONES[technician.zone]?.name || technician.zone} - {ZONES[technician.zone]?.areas || ''}
+                  </Text>
                 </View>
               </View>
             )}

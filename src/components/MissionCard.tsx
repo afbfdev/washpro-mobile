@@ -9,12 +9,7 @@ interface MissionCardProps {
   onPress: () => void;
 }
 
-const SERVICE_LABELS: Record<string, string> = {
-  express: 'Express',
-  brillance: 'Brillance',
-  gold: 'Gold',
-  royale: 'Royale',
-};
+import { SERVICE_LABELS } from '../constants/appConstants';
 
 const MissionCard: React.FC<MissionCardProps> = ({ booking, onPress }) => {
   const serviceName = SERVICE_LABELS[booking.serviceTier] || booking.serviceTier;
@@ -34,7 +29,7 @@ const MissionCard: React.FC<MissionCardProps> = ({ booking, onPress }) => {
             <View style={styles.carInfo}>
               <Ionicons name="car-outline" size={14} color={Colors.textLight} />
               <Text style={styles.carText}>
-                {booking.vehicleBrand} {booking.vehicleModel}
+                {[booking.vehicleBrand, booking.vehicleModel].filter(Boolean).join(' ') || 'Véhicule'}
               </Text>
             </View>
           </View>

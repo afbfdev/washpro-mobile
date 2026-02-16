@@ -30,20 +30,7 @@ import { Colors, Fonts, BorderRadius, Shadows } from '../constants/theme';
 
 type MissionDetailRouteProp = RouteProp<RootStackParamList, 'MissionDetail'>;
 
-const CLEANING_STEPS = [
-  'Lavage Extérieur',
-  'Jantes & Pneus',
-  'Aspiration Intérieure',
-  'Vitres',
-  'Finitions',
-];
-
-const SERVICE_LABELS: Record<string, string> = {
-  express: 'Express',
-  brillance: 'Brillance',
-  gold: 'Gold',
-  royale: 'Royale',
-};
+import { SERVICE_LABELS } from '../constants/appConstants';
 
 const MissionDetailScreen: React.FC = () => {
   const route = useRoute<MissionDetailRouteProp>();
@@ -57,9 +44,6 @@ const MissionDetailScreen: React.FC = () => {
   const [distance, setDistance] = useState<string>('...');
   const [showFinishModal, setShowFinishModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [checkedSteps, setCheckedSteps] = useState<boolean[]>(
-    CLEANING_STEPS.map(() => false)
-  );
   const [photosBefore, setPhotosBefore] = useState<string[]>([]);
   const [photosAfter, setPhotosAfter] = useState<string[]>([]);
 
@@ -67,9 +51,9 @@ const MissionDetailScreen: React.FC = () => {
     if (!booking) return;
 
     if (booking.status === 'COMPLETED') {
-      setStep(4);
+      setStep(3);
     } else if (booking.status === 'IN_PROGRESS') {
-      setStep(1);
+      setStep(2);
     }
 
     // Load existing photos
@@ -100,7 +84,13 @@ const MissionDetailScreen: React.FC = () => {
 
       subscription = await watchLocation((loc) => {
         setUserLocation(loc);
-        if (booking && hasValidCoords) {
+        if (
+          booking &&
+          booking.latitude != null &&
+          booking.longitude != null &&
+          booking.latitude !== 0 &&
+          booking.longitude !== 0
+        ) {
           const dist = calculateDistance(
             loc.latitude,
             loc.longitude,
@@ -132,28 +122,24 @@ const MissionDetailScreen: React.FC = () => {
   }
 
   const hasValidCoords =
-    typeof booking.latitude === 'number' &&
-    typeof booking.longitude === 'number' &&
+    booking.latitude != null &&
+    booking.longitude != null &&
     booking.latitude !== 0 &&
     booking.longitude !== 0;
 
   const destination: Location = {
-    latitude: hasValidCoords ? booking.latitude : 33.5731,
-    longitude: hasValidCoords ? booking.longitude : -7.5898,
+    latitude: hasValidCoords ? booking.latitude! : 33.5731,
+    longitude: hasValidCoords ? booking.longitude! : -7.5898,
     address: booking.address,
   };
 
   const handleStartMission = async () => {
     try {
       await startBooking(booking.id);
-      setStep(1);
+      setStep(2);
     } catch (error) {
       Alert.alert('Erreur', 'Impossible de démarrer la mission.');
     }
-  };
-
-  const handleNextStep = () => {
-    setStep((prev) => prev + 1);
   };
 
   const handleFinish = async () => {
@@ -166,41 +152,37 @@ const MissionDetailScreen: React.FC = () => {
     }
   };
 
-  const toggleStep = (index: number) => {
-    setCheckedSteps((prev) => {
-      const updated = [...prev];
-      updated[index] = !updated[index];
-      return updated;
-    });
-  };
-
   const handlePhotoTaken = async (
     uri: string,
     index: number,
     type: 'BEFORE' | 'AFTER'
   ) => {
-    // Immediately show the local photo
-    if (type === 'BEFORE') {
-      setPhotosBefore((prev) => {
-        const updated = [...prev];
-        updated[index] = uri;
-        return updated;
-      });
-    } else {
-      setPhotosAfter((prev) => {
-        const updated = [...prev];
-        updated[index] = uri;
-        return updated;
-      });
-    }
-
-    // Upload in background
     try {
+      // Immediately show the local photo
+      if (type === 'BEFORE') {
+        setPhotosBefore((prev) => {
+          const updated = [...prev];
+          updated[index] = uri;
+          return updated;
+        });
+      } else {
+        setPhotosAfter((prev) => {
+          const updated = [...prev];
+          updated[index] = uri;
+          return updated;
+        });
+      }
+
+      // Upload vers le backend et enregistrer dans la BDD
       setIsUploading(true);
-      const cloudUrl = await uploadImage(uri);
-      await uploadBookingPhoto(booking.id, cloudUrl, type);
-    } catch (error) {
-      console.warn('Photo upload failed, saved locally:', error);
+      const photoUrl = await uploadImage(uri);
+      await uploadBookingPhoto(booking.id, photoUrl, type);
+    } catch (error: any) {
+      console.error('Photo upload failed:', error);
+      Alert.alert(
+        'Erreur upload',
+        error.message || "La photo n'a pas pu être envoyée. Elle est sauvegardée localement."
+      );
     } finally {
       setIsUploading(false);
     }
@@ -213,15 +195,16 @@ const MissionDetailScreen: React.FC = () => {
       case 1:
         return 'Photos avant lavage';
       case 2:
-        return 'Lavage en cours';
-      case 3:
         return 'Photos après lavage';
-      case 4:
+      case 3:
         return 'Mission Terminée';
       default:
         return '';
     }
   };
+
+  const allBeforePhotosTaken = photosBefore.filter(Boolean).length >= 5;
+  const allAfterPhotosTaken = photosAfter.filter(Boolean).length >= 5;
 
   const openGoogleMaps = () => {
     const url = `https://maps.google.com/?q=${booking.address}`;
@@ -245,7 +228,7 @@ const MissionDetailScreen: React.FC = () => {
           <View style={styles.headerSubtitleRow}>
             <Ionicons name="car" size={12} color={Colors.secondary} />
             <Text style={styles.headerSubtitle}>
-              {booking.vehicleBrand} {booking.vehicleModel}
+              {[booking.vehicleBrand, booking.vehicleModel].filter(Boolean).join(' ') || 'Véhicule'}
             </Text>
           </View>
         </View>
@@ -300,7 +283,7 @@ const MissionDetailScreen: React.FC = () => {
                 <Ionicons name="location" size={20} color={Colors.primary} />
                 <View style={styles.infoTextContainer}>
                   <Text style={styles.infoAddress}>{booking.address}</Text>
-                  {step !== 4 && (
+                  {step !== 3 && (
                     <View style={styles.gpsStatus}>
                       <View style={styles.gpsDot} />
                       <Text style={styles.gpsText}>GPS Actif</Text>
@@ -327,7 +310,7 @@ const MissionDetailScreen: React.FC = () => {
             </View>
 
             {/* Existing Photos */}
-            {(photosBefore.length > 0 || photosAfter.length > 0) && step === 4 && (
+            {(photosBefore.length > 0 || photosAfter.length > 0) && step === 3 && (
               <View style={styles.existingPhotos}>
                 {photosBefore.length > 0 && (
                   <View style={styles.photoSection}>
@@ -365,15 +348,28 @@ const MissionDetailScreen: React.FC = () => {
             )}
 
             {/* Active Steps */}
-            {step < 4 && (
+            {step < 3 && (
               <View style={styles.activeStep}>
                 <Text style={styles.stepTitle}>{getStepTitle()}</Text>
 
                 {step === 1 && (
                   <View>
                     <Text style={styles.stepDescription}>
-                      Prenez des photos du véhicule avant de commencer le lavage.
+                      Prenez les 5 photos du véhicule avant de commencer le lavage.
                     </Text>
+                    <View style={styles.photoCounter}>
+                      <Ionicons
+                        name="camera"
+                        size={16}
+                        color={allBeforePhotosTaken ? Colors.success : Colors.textMuted}
+                      />
+                      <Text style={[
+                        styles.photoCounterText,
+                        allBeforePhotosTaken && { color: Colors.success },
+                      ]}>
+                        {photosBefore.filter(Boolean).length}/5 photos
+                      </Text>
+                    </View>
                     {[
                       '1. Face Avant',
                       '2. Face Arrière',
@@ -394,35 +390,21 @@ const MissionDetailScreen: React.FC = () => {
                 {step === 2 && (
                   <View>
                     <Text style={styles.stepDescription}>
-                      Cochez les étapes effectuées :
+                      Prenez les 5 photos du résultat final pour validation.
                     </Text>
-                    {CLEANING_STEPS.map((item, idx) => (
-                      <TouchableOpacity
-                        key={idx}
-                        style={styles.checkboxRow}
-                        onPress={() => toggleStep(idx)}
-                      >
-                        <View
-                          style={[
-                            styles.checkbox,
-                            checkedSteps[idx] && styles.checkboxChecked,
-                          ]}
-                        >
-                          {checkedSteps[idx] && (
-                            <Ionicons name="checkmark" size={16} color={Colors.white} />
-                          )}
-                        </View>
-                        <Text style={styles.checkboxLabel}>{item}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
-
-                {step === 3 && (
-                  <View>
-                    <Text style={styles.stepDescription}>
-                      Prenez des photos du résultat final pour validation.
-                    </Text>
+                    <View style={styles.photoCounter}>
+                      <Ionicons
+                        name="camera"
+                        size={16}
+                        color={allAfterPhotosTaken ? Colors.success : Colors.textMuted}
+                      />
+                      <Text style={[
+                        styles.photoCounterText,
+                        allAfterPhotosTaken && { color: Colors.success },
+                      ]}>
+                        {photosAfter.filter(Boolean).length}/5 photos
+                      </Text>
+                    </View>
                     {[
                       '1. Face Avant (Propre)',
                       '2. Face Arrière (Propre)',
@@ -443,7 +425,7 @@ const MissionDetailScreen: React.FC = () => {
             )}
 
             {/* Completed */}
-            {step === 4 && (
+            {step === 3 && (
               <View style={styles.completedView}>
                 <View style={styles.completedIcon}>
                   <Ionicons name="checkmark-circle" size={48} color={Colors.success} />
@@ -459,27 +441,36 @@ const MissionDetailScreen: React.FC = () => {
       </ScrollView>
 
       {/* Action Button */}
-      {step < 4 && (
+      {step < 3 && (
         <View style={styles.footer}>
-          {step === 0 ? (
-            <TouchableOpacity style={styles.primaryButton} onPress={handleStartMission}>
-              <Text style={styles.primaryButtonText}>Démarrer la mission</Text>
-              <Ionicons name="chevron-forward" size={20} color={Colors.primary} />
-            </TouchableOpacity>
-          ) : step < 3 ? (
-            <TouchableOpacity style={styles.primaryButton} onPress={handleNextStep}>
+          {step === 0 && (
+            <TouchableOpacity style={styles.primaryButton} onPress={() => setStep(1)}>
               <Text style={styles.primaryButtonText}>Étape Suivante</Text>
               <Ionicons name="chevron-forward" size={20} color={Colors.primary} />
             </TouchableOpacity>
-          ) : (
+          )}
+          {step === 1 && (
             <TouchableOpacity
-              style={[styles.primaryButton, styles.finishButton]}
-              onPress={() => setShowFinishModal(true)}
+              style={[styles.primaryButton, !allBeforePhotosTaken && styles.disabledButton]}
+              onPress={handleStartMission}
+              disabled={!allBeforePhotosTaken}
             >
-              <Text style={[styles.primaryButtonText, styles.finishButtonText]}>
+              <Text style={[styles.primaryButtonText, !allBeforePhotosTaken && styles.disabledButtonText]}>
+                Démarrer la mission
+              </Text>
+              <Ionicons name="play-circle" size={20} color={allBeforePhotosTaken ? Colors.primary : Colors.textLight} />
+            </TouchableOpacity>
+          )}
+          {step === 2 && (
+            <TouchableOpacity
+              style={[styles.primaryButton, styles.finishButton, !allAfterPhotosTaken && styles.disabledButton]}
+              onPress={() => setShowFinishModal(true)}
+              disabled={!allAfterPhotosTaken}
+            >
+              <Text style={[styles.primaryButtonText, styles.finishButtonText, !allAfterPhotosTaken && styles.disabledButtonText]}>
                 Terminer la mission
               </Text>
-              <Ionicons name="checkmark-circle" size={20} color={Colors.white} />
+              <Ionicons name="checkmark-circle" size={20} color={allAfterPhotosTaken ? Colors.white : Colors.textLight} />
             </TouchableOpacity>
           )}
         </View>
@@ -762,34 +753,24 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     marginBottom: 16,
   },
-  checkboxRow: {
+  photoCounter: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.white,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.lg,
-    padding: 16,
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: Colors.textLight,
-    justifyContent: 'center',
-    alignItems: 'center',
+  photoCounterText: {
+    fontSize: 13,
+    fontFamily: Fonts.semiBold,
+    color: Colors.textMuted,
+    marginLeft: 6,
   },
-  checkboxChecked: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+  disabledButton: {
+    backgroundColor: Colors.backgroundMuted,
+    shadowOpacity: 0,
+    elevation: 0,
   },
-  checkboxLabel: {
-    fontSize: 15,
-    fontFamily: Fonts.medium,
-    color: Colors.textPrimary,
-    marginLeft: 12,
+  disabledButtonText: {
+    color: Colors.textLight,
   },
   completedView: {
     alignItems: 'center',

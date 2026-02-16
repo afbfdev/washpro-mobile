@@ -15,7 +15,6 @@ import LoginScreen from '../screens/LoginScreen';
 import MissionListScreen from '../screens/MissionListScreen';
 import MissionDetailScreen from '../screens/MissionDetailScreen';
 import HistoryScreen from '../screens/HistoryScreen';
-import SmartAssistantScreen from '../screens/SmartAssistantScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -51,9 +50,6 @@ const TabNavigator = () => {
             case 'History':
               iconName = focused ? 'time' : 'time-outline';
               break;
-            case 'Assistant':
-              iconName = focused ? 'sparkles' : 'sparkles-outline';
-              break;
             case 'Profile':
               iconName = focused ? 'person' : 'person-outline';
               break;
@@ -86,11 +82,6 @@ const TabNavigator = () => {
         name="History"
         component={HistoryScreen}
         options={{ tabBarLabel: 'Historique' }}
-      />
-      <Tab.Screen
-        name="Assistant"
-        component={SmartAssistantScreen}
-        options={{ tabBarLabel: 'Assistant IA' }}
       />
       <Tab.Screen
         name="Profile"

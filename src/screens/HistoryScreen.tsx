@@ -16,12 +16,7 @@ import { Colors, Fonts, BorderRadius, Shadows } from '../constants/theme';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const SERVICE_LABELS: Record<string, string> = {
-  express: 'Express',
-  brillance: 'Brillance',
-  gold: 'Gold',
-  royale: 'Royale',
-};
+import { SERVICE_LABELS } from '../constants/appConstants';
 
 const ScoreBadge: React.FC<{ score: number }> = ({ score }) => {
   const stars = [];
@@ -69,7 +64,7 @@ const HistoryScreen: React.FC = () => {
           <View style={styles.carInfo}>
             <Ionicons name="car-outline" size={14} color={Colors.textLight} />
             <Text style={styles.carText}>
-              {item.vehicleBrand} {item.vehicleModel}
+              {[item.vehicleBrand, item.vehicleModel].filter(Boolean).join(' ') || 'Véhicule'}
             </Text>
           </View>
           <Text style={styles.serviceType}>{serviceName}</Text>
