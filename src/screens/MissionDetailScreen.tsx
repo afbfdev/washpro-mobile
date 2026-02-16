@@ -43,7 +43,7 @@ const MissionDetailScreen: React.FC = () => {
   const [userLocation, setUserLocation] = useState<Location | null>(null);
   const [distance, setDistance] = useState<string>('...');
   const [showFinishModal, setShowFinishModal] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const [uploadingCount, setUploadingCount] = useState(0);
   const [photosBefore, setPhotosBefore] = useState<string[]>([]);
   const [photosAfter, setPhotosAfter] = useState<string[]>([]);
 
@@ -152,40 +152,40 @@ const MissionDetailScreen: React.FC = () => {
     }
   };
 
-  const handlePhotoTaken = async (
+  const handlePhotoTaken = (
     uri: string,
     index: number,
     type: 'BEFORE' | 'AFTER'
   ) => {
-    try {
-      // Immediately show the local photo
-      if (type === 'BEFORE') {
-        setPhotosBefore((prev) => {
-          const updated = [...prev];
-          updated[index] = uri;
-          return updated;
-        });
-      } else {
-        setPhotosAfter((prev) => {
-          const updated = [...prev];
-          updated[index] = uri;
-          return updated;
-        });
-      }
-
-      // Upload vers le backend et enregistrer dans la BDD
-      setIsUploading(true);
-      const photoUrl = await uploadImage(uri);
-      await uploadBookingPhoto(booking.id, photoUrl, type);
-    } catch (error: any) {
-      console.error('Photo upload failed:', error);
-      Alert.alert(
-        'Erreur upload',
-        error.message || "La photo n'a pas pu être envoyée. Elle est sauvegardée localement."
-      );
-    } finally {
-      setIsUploading(false);
+    // Immediately show the local photo
+    if (type === 'BEFORE') {
+      setPhotosBefore((prev) => {
+        const updated = [...prev];
+        updated[index] = uri;
+        return updated;
+      });
+    } else {
+      setPhotosAfter((prev) => {
+        const updated = [...prev];
+        updated[index] = uri;
+        return updated;
+      });
     }
+
+    // Upload en arrière-plan (non-bloquant)
+    setUploadingCount((c) => c + 1);
+    uploadImage(uri)
+      .then((photoUrl) => uploadBookingPhoto(booking.id, photoUrl, type))
+      .catch((error: any) => {
+        console.error('Photo upload failed:', error);
+        Alert.alert(
+          'Erreur upload',
+          error.message || "La photo n'a pas pu être envoyée."
+        );
+      })
+      .finally(() => {
+        setUploadingCount((c) => c - 1);
+      });
   };
 
   const getStepTitle = () => {
@@ -241,10 +241,12 @@ const MissionDetailScreen: React.FC = () => {
       </View>
 
       {/* Upload indicator */}
-      {isUploading && (
+      {uploadingCount > 0 && (
         <View style={styles.uploadBanner}>
           <ActivityIndicator size="small" color={Colors.white} />
-          <Text style={styles.uploadText}>Upload photo en cours...</Text>
+          <Text style={styles.uploadText}>
+            Upload {uploadingCount > 1 ? `${uploadingCount} photos` : 'photo'} en cours...
+          </Text>
         </View>
       )}
 
