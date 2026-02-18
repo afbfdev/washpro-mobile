@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, AppState } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -10,6 +10,11 @@ import { RootStackParamList, TabParamList } from '../types';
 import { useMissionStore } from '../store/missionStore';
 import { useAuthStore } from '../store/authStore';
 import { Colors, Fonts } from '../constants/theme';
+import {
+  requestNotificationPermissions,
+  setupNotificationChannel,
+  sendNewBookingNotification,
+} from '../services/notificationService';
 
 import LoginScreen from '../screens/LoginScreen';
 import MissionListScreen from '../screens/MissionListScreen';
@@ -92,12 +97,16 @@ const TabNavigator = () => {
   );
 };
 
+const POLLING_INTERVAL = 30_000; // 30 secondes
+
 const AppNavigator: React.FC = () => {
-  const { setOffline } = useMissionStore();
-  const { isAuthenticated, isLoading, loadSession } = useAuthStore();
+  const { setOffline, fetchBookings } = useMissionStore();
+  const { isAuthenticated, isLoading, loadSession, technician } = useAuthStore();
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     loadSession();
+    setupNotificationChannel();
 
     const unsubscribe = NetInfo.addEventListener((state) => {
       setOffline(!state.isConnected);
@@ -105,6 +114,45 @@ const AppNavigator: React.FC = () => {
 
     return () => unsubscribe();
   }, []);
+
+  // Polling des nouvelles réservations
+  useEffect(() => {
+    if (!isAuthenticated || !technician?.id) {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+      return;
+    }
+
+    // Demander les permissions au login
+    requestNotificationPermissions();
+
+    // Premier fetch
+    fetchBookings(technician.id);
+
+    const poll = async () => {
+      // Ne pas poll si l'app est en arrière-plan
+      if (AppState.currentState !== 'active') return;
+
+      const netState = await NetInfo.fetch();
+      if (!netState.isConnected) return;
+
+      const newBookings = await fetchBookings(technician.id);
+      for (const booking of newBookings) {
+        await sendNewBookingNotification(booking);
+      }
+    };
+
+    pollingRef.current = setInterval(poll, POLLING_INTERVAL);
+
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+  }, [isAuthenticated, technician?.id]);
 
   if (isLoading) {
     return (

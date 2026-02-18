@@ -37,7 +37,8 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "WRITE_EXTERNAL_STORAGE",
+        "POST_NOTIFICATIONS"
       ],
       "config": {
         "googleMaps": {
@@ -62,7 +63,8 @@
           "cameraPermission": "WashPro a besoin d'accéder à la caméra."
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-notifications"
     ],
     "extra": {
       "eas": {

@@ -5,11 +5,12 @@ import * as api from '../services/apiService';
 
 interface MissionStore {
   bookings: Booking[];
+  knownBookingIds: Set<string>;
   isLoading: boolean;
   isOffline: boolean;
   lastSync: string | null;
   setOffline: (offline: boolean) => void;
-  fetchBookings: (technicianId?: string) => Promise<void>;
+  fetchBookings: (technicianId?: string) => Promise<Booking[]>;
   startBooking: (bookingId: string) => Promise<void>;
   completeBooking: (bookingId: string) => Promise<void>;
   getBookingById: (id: string) => Booking | undefined;
@@ -19,6 +20,7 @@ const STORAGE_KEY = 'washpro_bookings';
 
 export const useMissionStore = create<MissionStore>((set, get) => ({
   bookings: [],
+  knownBookingIds: new Set<string>(),
   isLoading: true,
   isOffline: false,
   lastSync: null,
@@ -33,12 +35,23 @@ export const useMissionStore = create<MissionStore>((set, get) => ({
         ? allBookings.filter((b) => b.technicianId === technicianId)
         : allBookings;
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+
+      // Détecter les nouvelles réservations
+      const { knownBookingIds } = get();
+      const newBookings = knownBookingIds.size > 0
+        ? filtered.filter((b) => !knownBookingIds.has(b.id))
+        : [];
+      const updatedIds = new Set(filtered.map((b) => b.id));
+
       set({
         bookings: filtered,
+        knownBookingIds: updatedIds,
         isLoading: false,
         lastSync: new Date().toISOString(),
         isOffline: false,
       });
+
+      return newBookings;
     } catch (error) {
       console.error('Failed to fetch bookings from API:', error);
       // Offline fallback: load from cache
@@ -52,6 +65,7 @@ export const useMissionStore = create<MissionStore>((set, get) => ({
       } catch {
         set({ bookings: [], isLoading: false, isOffline: true });
       }
+      return [];
     }
   },
 
