@@ -294,6 +294,21 @@ const MissionDetailScreen: React.FC = () => {
                   )}
                 </View>
               </View>
+              {booking.phone ? (
+                <TouchableOpacity
+                  style={styles.phoneRow}
+                  onPress={() => Linking.openURL(`tel:${booking.phone}`)}
+                >
+                  <View style={styles.phoneIcon}>
+                    <Ionicons name="call" size={16} color={Colors.white} />
+                  </View>
+                  <View style={styles.phoneInfo}>
+                    <Text style={styles.phoneLabel}>CLIENT</Text>
+                    <Text style={styles.phoneNumber}>{booking.phone}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={Colors.textLight} />
+                </TouchableOpacity>
+              ) : null}
               <View style={styles.serviceRow}>
                 <Text style={styles.serviceType}>{serviceName}</Text>
                 <Text style={styles.scheduledTime}>{booking.time}</Text>
@@ -663,6 +678,38 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: Fonts.regular,
     color: Colors.success,
+  },
+  phoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  phoneIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  phoneInfo: {
+    flex: 1,
+  },
+  phoneLabel: {
+    fontSize: 10,
+    fontFamily: Fonts.bold,
+    color: Colors.textMuted,
+    letterSpacing: 0.5,
+  },
+  phoneNumber: {
+    fontSize: 15,
+    fontFamily: Fonts.semiBold,
+    color: Colors.primary,
+    marginTop: 1,
   },
   serviceRow: {
     flexDirection: 'row',

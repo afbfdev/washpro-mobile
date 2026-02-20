@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Booking } from '../types';
 import { Colors, Fonts, BorderRadius, Shadows } from '../constants/theme';
@@ -32,6 +32,16 @@ const MissionCard: React.FC<MissionCardProps> = ({ booking, onPress }) => {
                 {[booking.vehicleBrand, booking.vehicleModel].filter(Boolean).join(' ') || 'Véhicule'}
               </Text>
             </View>
+            {booking.phone ? (
+              <TouchableOpacity
+                style={styles.phoneRow}
+                onPress={() => Linking.openURL(`tel:${booking.phone}`)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="call-outline" size={13} color={Colors.primary} />
+                <Text style={styles.phoneText}>{booking.phone}</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
 
           <View style={styles.headerRight}>
@@ -112,6 +122,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: Fonts.regular,
     color: Colors.textMuted,
+    marginLeft: 4,
+  },
+  phoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  phoneText: {
+    fontSize: 13,
+    fontFamily: Fonts.medium,
+    color: Colors.primary,
     marginLeft: 4,
   },
   timeBadge: {
