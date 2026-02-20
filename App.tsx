@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet, View, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Alert } from 'react-native';
 import {
   useFonts,
   Poppins_400Regular,
@@ -10,8 +10,23 @@ import {
   Poppins_700Bold,
   Poppins_800ExtraBold,
 } from '@expo-google-fonts/poppins';
+import * as Updates from 'expo-updates';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
 import { Colors } from './src/constants/theme';
+
+async function checkForUpdates() {
+  if (__DEV__) return; // Pas de vérification en développement
+  try {
+    const update = await Updates.checkForUpdateAsync();
+    if (update.isAvailable) {
+      await Updates.fetchUpdateAsync();
+      await Updates.reloadAsync();
+    }
+  } catch {
+    // Silencieux si pas de réseau
+  }
+}
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -21,6 +36,10 @@ export default function App() {
     Poppins_700Bold,
     Poppins_800ExtraBold,
   });
+
+  useEffect(() => {
+    checkForUpdates();
+  }, []);
 
   if (!fontsLoaded) {
     return (
@@ -32,8 +51,10 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <StatusBar style="light" />
-      <AppNavigator />
+      <SafeAreaProvider>
+        <StatusBar style="light" />
+        <AppNavigator />
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

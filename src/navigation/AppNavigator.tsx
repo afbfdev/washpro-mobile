@@ -10,6 +10,7 @@ import { RootStackParamList, TabParamList } from '../types';
 import { useMissionStore } from '../store/missionStore';
 import { useAuthStore } from '../store/authStore';
 import { Colors, Fonts } from '../constants/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   requestNotificationPermissions,
   setupNotificationChannel,
@@ -41,6 +42,7 @@ const OfflineBanner = () => {
 };
 
 const TabNavigator = () => {
+  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -68,8 +70,8 @@ const TabNavigator = () => {
           backgroundColor: Colors.white,
           borderTopColor: Colors.border,
           paddingTop: 8,
-          paddingBottom: 8,
-          height: 65,
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
+          height: 65 + insets.bottom,
         },
         tabBarLabelStyle: {
           fontSize: 10,

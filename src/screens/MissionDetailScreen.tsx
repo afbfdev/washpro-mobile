@@ -5,13 +5,13 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   Modal,
   Linking,
   Image,
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useMissionStore } from '../store/missionStore';
@@ -33,6 +33,7 @@ type MissionDetailRouteProp = RouteProp<RootStackParamList, 'MissionDetail'>;
 import { SERVICE_LABELS } from '../constants/appConstants';
 
 const MissionDetailScreen: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const route = useRoute<MissionDetailRouteProp>();
   const navigation = useNavigation();
   const { getBookingById, startBooking, completeBooking } = useMissionStore();
@@ -253,7 +254,7 @@ const MissionDetailScreen: React.FC = () => {
       {/* Content */}
       <ScrollView
         style={styles.content}
-        contentContainerStyle={styles.contentContainer}
+        contentContainerStyle={[styles.contentContainer, { paddingBottom: insets.bottom + 100 }]}
       >
         {/* Step 0: Map */}
         {step === 0 && (
@@ -444,7 +445,7 @@ const MissionDetailScreen: React.FC = () => {
 
       {/* Action Button */}
       {step < 3 && (
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
           {step === 0 && (
             <TouchableOpacity style={styles.primaryButton} onPress={() => setStep(1)}>
               <Text style={styles.primaryButtonText}>Étape Suivante</Text>
@@ -516,7 +517,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     paddingHorizontal: 16,
     paddingVertical: 16,
-    paddingTop: 48,
+    paddingTop: 16,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -806,7 +807,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
-    padding: 16,
+    paddingTop: 16,
+    paddingHorizontal: 16,
   },
   primaryButton: {
     backgroundColor: Colors.secondary,
