@@ -56,9 +56,13 @@ const MissionListScreen: React.FC = () => {
     loadData();
   }, [loadData]);
 
-  const activeMissions = bookings.filter(
-    (b) => b.status === 'PENDING' || b.status === 'CONFIRMED' || b.status === 'IN_PROGRESS'
-  );
+  const activeMissions = bookings
+    .filter((b) => b.status === 'PENDING' || b.status === 'CONFIRMED' || b.status === 'IN_PROGRESS')
+    .sort((a, b) => {
+      const dateA = new Date(`${a.date}T${a.time}`).getTime();
+      const dateB = new Date(`${b.date}T${b.time}`).getTime();
+      return dateA - dateB;
+    });
 
   const recentMissions = [...bookings]
     .sort((a, b) => new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime())
