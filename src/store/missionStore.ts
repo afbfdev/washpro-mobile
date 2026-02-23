@@ -6,11 +6,13 @@ import * as api from '../services/apiService';
 interface MissionStore {
   bookings: Booking[];
   knownBookingIds: Set<string>;
+  unreadCount: number;
   isLoading: boolean;
   isOffline: boolean;
   lastSync: string | null;
   setOffline: (offline: boolean) => void;
   fetchBookings: (technicianId?: string) => Promise<Booking[]>;
+  markAllAsRead: () => void;
   startBooking: (bookingId: string) => Promise<void>;
   completeBooking: (bookingId: string) => Promise<void>;
   getBookingById: (id: string) => Booking | undefined;
@@ -21,11 +23,14 @@ const STORAGE_KEY = 'washpro_bookings';
 export const useMissionStore = create<MissionStore>((set, get) => ({
   bookings: [],
   knownBookingIds: new Set<string>(),
+  unreadCount: 0,
   isLoading: true,
   isOffline: false,
   lastSync: null,
 
   setOffline: (offline: boolean) => set({ isOffline: offline }),
+
+  markAllAsRead: () => set({ unreadCount: 0 }),
 
   fetchBookings: async (technicianId?: string) => {
     set({ isLoading: true });
@@ -43,13 +48,14 @@ export const useMissionStore = create<MissionStore>((set, get) => ({
         : [];
       const updatedIds = new Set(filtered.map((b) => b.id));
 
-      set({
+      set((state) => ({
         bookings: filtered,
         knownBookingIds: updatedIds,
+        unreadCount: state.unreadCount + newBookings.length,
         isLoading: false,
         lastSync: new Date().toISOString(),
         isOffline: false,
-      });
+      }));
 
       return newBookings;
     } catch (error) {
