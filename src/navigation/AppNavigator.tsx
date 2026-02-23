@@ -15,6 +15,7 @@ import {
   requestNotificationPermissions,
   setupNotificationChannel,
   sendNewBookingNotification,
+  registerPushToken,
 } from '../services/notificationService';
 
 import LoginScreen from '../screens/LoginScreen';
@@ -127,8 +128,9 @@ const AppNavigator: React.FC = () => {
       return;
     }
 
-    // Demander les permissions au login
+    // Demander les permissions et enregistrer le push token
     requestNotificationPermissions();
+    registerPushToken(technician.id);
 
     // Premier fetch
     fetchBookings(technician.id);

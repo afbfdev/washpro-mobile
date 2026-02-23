@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { Booking } from '../types';
 import { SERVICE_LABELS } from '../constants/appConstants';
+import { savePushToken } from './apiService';
 
 // Afficher les notifications même quand l'app est au premier plan
 Notifications.setNotificationHandler({
@@ -21,6 +22,24 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
 
   const { status } = await Notifications.requestPermissionsAsync();
   return status === 'granted';
+};
+
+/**
+ * Récupère le push token Expo et l'envoie au backend.
+ */
+export const registerPushToken = async (technicianId: string): Promise<void> => {
+  try {
+    const hasPermission = await requestNotificationPermissions();
+    if (!hasPermission) return;
+
+    const tokenData = await Notifications.getExpoPushTokenAsync({
+      projectId: '9a4bd93c-6e1d-46cb-b7e3-1753a987a4ce',
+    });
+
+    await savePushToken(technicianId, tokenData.data);
+  } catch (error) {
+    console.error('Push token registration failed:', error);
+  }
 };
 
 /**

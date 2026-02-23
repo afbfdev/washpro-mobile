@@ -46,6 +46,18 @@ export const fetchBookingPhotos = async (bookingId: string): Promise<BookingPhot
   return res.json();
 };
 
+export const savePushToken = async (
+  technicianId: string,
+  token: string
+): Promise<void> => {
+  const res = await fetch(`${API_BASE_URL}/api/technicians/push-token`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ technicianId, token }),
+  });
+  if (!res.ok) throw new Error(`Erreur ${res.status}: ${res.statusText}`);
+};
+
 export const uploadBookingPhoto = async (
   bookingId: string,
   url: string,
