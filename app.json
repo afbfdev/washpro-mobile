@@ -27,7 +27,8 @@
         "NSCameraUsageDescription": "WashPro a besoin d'accéder à la caméra pour prendre des photos des véhicules.",
         "NSPhotoLibraryUsageDescription": "WashPro a besoin d'accéder à vos photos pour ajouter des images de véhicules.",
         "NSLocationWhenInUseUsageDescription": "WashPro a besoin de votre position pour calculer la distance vers les missions.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "WashPro a besoin de votre position pour le suivi des missions."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "WashPro a besoin de votre position pour le suivi des missions.",
+        "UIBackgroundModes": ["fetch", "remote-notification"]
       },
       "config": {
         "googleMapsApiKey": "YOUR_GOOGLE_MAPS_API_KEY"
