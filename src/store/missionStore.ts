@@ -19,6 +19,8 @@ interface MissionStore {
 }
 
 const STORAGE_KEY = 'washpro_bookings';
+const KNOWN_IDS_KEY = 'washpro_known_ids';
+const UNREAD_COUNT_KEY = 'washpro_unread_count';
 
 export const useMissionStore = create<MissionStore>((set, get) => ({
   bookings: [],
@@ -30,7 +32,10 @@ export const useMissionStore = create<MissionStore>((set, get) => ({
 
   setOffline: (offline: boolean) => set({ isOffline: offline }),
 
-  markAllAsRead: () => set({ unreadCount: 0 }),
+  markAllAsRead: () => {
+    AsyncStorage.setItem(UNREAD_COUNT_KEY, '0');
+    set({ unreadCount: 0 });
+  },
 
   fetchBookings: async (technicianId?: string) => {
     set({ isLoading: true });
@@ -41,17 +46,42 @@ export const useMissionStore = create<MissionStore>((set, get) => ({
         : allBookings;
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
 
+      // Charger les IDs connus persistés si le store est vide (ex: redémarrage de l'app)
+      let { knownBookingIds } = get();
+      if (knownBookingIds.size === 0) {
+        try {
+          const storedIds = await AsyncStorage.getItem(KNOWN_IDS_KEY);
+          if (storedIds) {
+            knownBookingIds = new Set(JSON.parse(storedIds));
+            set({ knownBookingIds });
+          }
+        } catch {}
+      }
+
+      // Charger le unreadCount persisté
+      if (get().unreadCount === 0) {
+        try {
+          const storedCount = await AsyncStorage.getItem(UNREAD_COUNT_KEY);
+          if (storedCount) set({ unreadCount: parseInt(storedCount, 10) });
+        } catch {}
+      }
+
       // Détecter les nouvelles réservations
-      const { knownBookingIds } = get();
       const newBookings = knownBookingIds.size > 0
         ? filtered.filter((b) => !knownBookingIds.has(b.id))
         : [];
       const updatedIds = new Set(filtered.map((b) => b.id));
 
+      // Persister les IDs connus
+      await AsyncStorage.setItem(KNOWN_IDS_KEY, JSON.stringify([...updatedIds]));
+
+      const newUnreadCount = get().unreadCount + newBookings.length;
+      await AsyncStorage.setItem(UNREAD_COUNT_KEY, String(newUnreadCount));
+
       set((state) => ({
         bookings: filtered,
         knownBookingIds: updatedIds,
-        unreadCount: state.unreadCount + newBookings.length,
+        unreadCount: newUnreadCount,
         isLoading: false,
         lastSync: new Date().toISOString(),
         isOffline: false,
