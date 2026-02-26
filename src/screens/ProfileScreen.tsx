@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -126,7 +127,7 @@ const ProfileScreen: React.FC = () => {
         <View style={styles.menuSection}>
           <Text style={styles.menuSectionTitle}>Paramètres</Text>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => Linking.openSettings()}>
             <View style={styles.menuItemLeft}>
               <Ionicons name="notifications-outline" size={22} color={Colors.textSecondary} />
               <Text style={styles.menuItemText}>Notifications</Text>
@@ -134,7 +135,7 @@ const ProfileScreen: React.FC = () => {
             <Ionicons name="chevron-forward" size={20} color={Colors.textLight} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => Linking.openSettings()}>
             <View style={styles.menuItemLeft}>
               <Ionicons name="location-outline" size={22} color={Colors.textSecondary} />
               <Text style={styles.menuItemText}>Localisation</Text>
@@ -142,7 +143,7 @@ const ProfileScreen: React.FC = () => {
             <Ionicons name="chevron-forward" size={20} color={Colors.textLight} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => Linking.openSettings()}>
             <View style={styles.menuItemLeft}>
               <Ionicons name="camera-outline" size={22} color={Colors.textSecondary} />
               <Text style={styles.menuItemText}>Caméra</Text>
