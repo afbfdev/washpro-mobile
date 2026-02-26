@@ -48,6 +48,11 @@ const MissionCard: React.FC<MissionCardProps> = ({ booking, onPress }) => {
             <View style={styles.timeBadge}>
               <Text style={styles.timeText}>{booking.time}</Text>
             </View>
+            {booking.date ? (
+              <Text style={styles.dateText}>
+                {booking.date.split('-').reverse().join('/')}
+              </Text>
+            ) : null}
             {booking.status === 'IN_PROGRESS' && (
               <View style={styles.inProgressBadge}>
                 <View style={styles.pulseDot} />
@@ -145,6 +150,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: Fonts.bold,
     color: Colors.primary,
+  },
+  dateText: {
+    fontSize: 11,
+    fontFamily: Fonts.regular,
+    color: Colors.textMuted,
+    marginTop: 4,
+    textAlign: 'right',
   },
   inProgressBadge: {
     flexDirection: 'row',
