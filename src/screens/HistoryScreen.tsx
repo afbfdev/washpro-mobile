@@ -252,12 +252,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   chip: {
+    height: 34,
     paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderRadius: BorderRadius.full,
+    borderRadius: 17,
     backgroundColor: Colors.white,
     borderWidth: 1,
     borderColor: Colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   chipActive: {
     backgroundColor: Colors.primary,
