@@ -11,6 +11,8 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import * as MediaLibrary from 'expo-media-library';
+import { downloadAsync, documentDirectory } from 'expo-file-system/legacy';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -68,7 +70,7 @@ const MissionDetailScreen: React.FC = () => {
       setPhotosBefore(before);
       setPhotosAfter(after);
     }
-  }, [booking?.id]);
+  }, [booking?.id, booking?.status]);
 
   useEffect(() => {
     let subscription: ExpoLocation.LocationSubscription | null = null;
@@ -187,6 +189,23 @@ const MissionDetailScreen: React.FC = () => {
       .finally(() => {
         setUploadingCount((c) => c - 1);
       });
+  };
+
+  const downloadPhoto = async (url: string, index: number) => {
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission refusée', "Autorisez l'accès à la galerie dans les paramètres.");
+      return;
+    }
+    try {
+      const filename = `washpro_${Date.now()}_${index}.jpg`;
+      const localUri = `${documentDirectory}${filename}`;
+      const { uri } = await downloadAsync(url, localUri);
+      await MediaLibrary.saveToLibraryAsync(uri);
+      Alert.alert('Téléchargé', 'Photo enregistrée dans la galerie.');
+    } catch {
+      Alert.alert('Erreur', 'Impossible de télécharger la photo.');
+    }
   };
 
   const getStepTitle = () => {
@@ -337,11 +356,16 @@ const MissionDetailScreen: React.FC = () => {
                     </Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                       {photosBefore.map((uri, i) => (
-                        <Image
+                        <TouchableOpacity
                           key={i}
-                          source={{ uri }}
-                          style={styles.photoThumbnail}
-                        />
+                          onPress={() => downloadPhoto(uri, i)}
+                          style={styles.photoThumbnailWrapper}
+                        >
+                          <Image source={{ uri }} style={styles.photoThumbnail} />
+                          <View style={styles.downloadBadge}>
+                            <Ionicons name="download-outline" size={14} color="#fff" />
+                          </View>
+                        </TouchableOpacity>
                       ))}
                     </ScrollView>
                   </View>
@@ -353,11 +377,16 @@ const MissionDetailScreen: React.FC = () => {
                     </Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                       {photosAfter.map((uri, i) => (
-                        <Image
+                        <TouchableOpacity
                           key={i}
-                          source={{ uri }}
-                          style={styles.photoThumbnail}
-                        />
+                          onPress={() => downloadPhoto(uri, i)}
+                          style={styles.photoThumbnailWrapper}
+                        >
+                          <Image source={{ uri }} style={styles.photoThumbnail} />
+                          <View style={styles.downloadBadge}>
+                            <Ionicons name="download-outline" size={14} color="#fff" />
+                          </View>
+                        </TouchableOpacity>
                       ))}
                     </ScrollView>
                   </View>
@@ -782,11 +811,22 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: 8,
   },
+  photoThumbnailWrapper: {
+    position: 'relative',
+    marginRight: 8,
+  },
   photoThumbnail: {
     width: 100,
     height: 100,
     borderRadius: BorderRadius.sm,
-    marginRight: 8,
+  },
+  downloadBadge: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderRadius: 10,
+    padding: 3,
   },
   activeStep: {
     marginBottom: 16,
