@@ -77,7 +77,15 @@
       ],
       "expo-font",
       "expo-notifications",
-      "expo-video"
+      "expo-video",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "WashPro a besoin d'accéder à la galerie pour sauvegarder les photos des véhicules.",
+          "savePhotosPermission": "WashPro a besoin d'enregistrer des photos dans votre galerie.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ]
     ],
     "extra": {
       "eas": {
