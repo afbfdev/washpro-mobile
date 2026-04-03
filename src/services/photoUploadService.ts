@@ -35,14 +35,7 @@ export const uploadImage = async (localUri: string): Promise<string> => {
       'Content-Type': 'application/json',
       'X-Admin-Password': ADMIN_PASSWORD,
     },
-    body: JSON.stringify({
-      type: 'blob.generate-client-token',
-      payload: {
-        pathname,
-        multipart: false,
-        clientPayload: null,
-      },
-    }),
+    body: JSON.stringify({ pathname }),
   });
 
   if (!tokenRes.ok) {
