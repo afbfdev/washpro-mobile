@@ -101,7 +101,7 @@ const TabNavigator = () => {
   );
 };
 
-const POLLING_INTERVAL = 30_000; // 30 secondes
+const POLLING_INTERVAL = 5 * 60_000; // 5 minutes (les push notifications gèrent le temps réel)
 
 const AppNavigator: React.FC = () => {
   const { setOffline, fetchBookings } = useMissionStore();
@@ -134,6 +134,13 @@ const AppNavigator: React.FC = () => {
     registerPushToken(technician.id);
     registerBackgroundFetch();
 
+    // Refetch immédiat quand l'app revient au premier plan (ex: après push notification)
+    const appStateSubscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        fetchBookings(technician.id);
+      }
+    });
+
     // Premier fetch
     fetchBookings(technician.id);
 
@@ -157,6 +164,7 @@ const AppNavigator: React.FC = () => {
         clearInterval(pollingRef.current);
         pollingRef.current = null;
       }
+      appStateSubscription.remove();
     };
   }, [isAuthenticated, technician?.id]);
 
