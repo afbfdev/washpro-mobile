@@ -95,6 +95,8 @@ export interface Booking {
   qrCodeReviewRequested: boolean;
   photos: BookingPhoto[];
   validation?: BookingValidation;
+  // Mission B2B (espace pro) — route les actions vers les endpoints B2B.
+  isB2B?: boolean;
 }
 
 // === Location ===

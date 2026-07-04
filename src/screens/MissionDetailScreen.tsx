@@ -18,7 +18,7 @@ import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useMissionStore } from '../store/missionStore';
 import { RootStackParamList, Location } from '../types';
-import { uploadBookingPhoto } from '../services/apiService';
+import { uploadBookingPhoto, fetchBookingPhotos } from '../services/apiService';
 import { uploadImage } from '../services/photoUploadService';
 import PhotoUploader from '../components/PhotoUploader';
 import LiveMap from '../components/LiveMap';
@@ -59,17 +59,19 @@ const MissionDetailScreen: React.FC = () => {
       setStep(2);
     }
 
-    // Load existing photos
-    if (booking.photos) {
-      const before = booking.photos
-        .filter((p) => p.type === 'BEFORE')
-        .map((p) => p.url);
-      const after = booking.photos
-        .filter((p) => p.type === 'AFTER')
-        .map((p) => p.url);
-      setPhotosBefore(before);
-      setPhotosAfter(after);
-    }
+    // Restaurer les photos déjà envoyées via l'endpoint dédié (les listes ne
+    // renvoient plus les URLs pour des raisons de performance). Routé B2B/classique.
+    let cancelled = false;
+    fetchBookingPhotos(booking.id)
+      .then((photos) => {
+        if (cancelled) return;
+        setPhotosBefore(photos.filter((p) => p.type === 'BEFORE').map((p) => p.url));
+        setPhotosAfter(photos.filter((p) => p.type === 'AFTER').map((p) => p.url));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, [booking?.id, booking?.status]);
 
   useEffect(() => {
@@ -140,8 +142,8 @@ const MissionDetailScreen: React.FC = () => {
     try {
       await startBooking(booking.id);
       setStep(2);
-    } catch (error) {
-      Alert.alert('Erreur', 'Impossible de démarrer la mission.');
+    } catch (error: any) {
+      Alert.alert('Erreur', error?.message || 'Impossible de démarrer la mission.');
     }
   };
 
@@ -150,8 +152,8 @@ const MissionDetailScreen: React.FC = () => {
       await completeBooking(booking.id);
       setShowFinishModal(false);
       navigation.goBack();
-    } catch (error) {
-      Alert.alert('Erreur', 'Impossible de terminer la mission.');
+    } catch (error: any) {
+      Alert.alert('Erreur', error?.message || 'Impossible de terminer la mission.');
     }
   };
 
